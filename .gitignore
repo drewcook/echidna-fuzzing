@@ -2,7 +2,7 @@
 **/node_modules/*
 **/corpus/*
 **/.DS_Store
-**/types/* 
+**/types/*
 **/typechain/*
 **/artifacts/*
 **/cache/*

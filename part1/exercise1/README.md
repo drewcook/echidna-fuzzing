@@ -2,14 +2,16 @@
 
 **Table of contents:**
 
-- [Target contract](#target-contract)
-- [Exercise](#exercise)
-- [Solution](#solution)
+- [Exercise 1](#exercise-1)
+  - [Target contract](#target-contract)
+  - [Exercise](#exercise)
+    - [Goals](#goals)
+  - [Solution](#solution)
 
-Join the team on Slack at: https://empireslacking.herokuapp.com/ #ethereum
+Join the team on Slack at: <https://empireslacking.herokuapp.com/> #ethereum
 
 ## Target contract
-  
+
 We will test the following contract (see [token.sol](./token.sol)):
 
 ```Solidity

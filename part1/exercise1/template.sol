@@ -1,3 +1,4 @@
+pragma solidity ^0.7.0;
 import "token.sol";
 
 contract TestToken is Token {
@@ -8,5 +9,8 @@ contract TestToken is Token {
     }
 
     // add the property
-    function echidna_test_balance() public view returns (bool) {}
+    // property must follow pattern - function echidna_*() public returns(bool) {}
+    function echidna_test_balance() public view returns (bool) {
+        return balances[echidna_caller] <= 10000;
+    }
 }

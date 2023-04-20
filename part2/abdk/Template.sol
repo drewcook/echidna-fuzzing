@@ -3,7 +3,6 @@ pragma solidity 0.8.1;
 import "./ABDKMath64x64.sol";
 
 contract EchidnaTemplate {
-
     /* ================================================================
        Library wrappers.
        These functions allow calling the ABDKMath64x64 library.
@@ -125,7 +124,8 @@ contract EchidnaTemplate {
     int128 internal THOUSAND_FP = ABDKMath64x64.fromInt(1000);
     int128 internal MINUS_SIXTY_FOUR_FP = ABDKMath64x64.fromInt(-64);
     int128 internal EPSILON = 1;
-    int128 internal ONE_TENTH_FP = ABDKMath64x64.div(ABDKMath64x64.fromInt(1), ABDKMath64x64.fromInt(10));
+    int128 internal ONE_TENTH_FP =
+        ABDKMath64x64.div(ABDKMath64x64.fromInt(1), ABDKMath64x64.fromInt(10));
 
     /* ================================================================
        Constants used for precision loss calculations
@@ -134,7 +134,7 @@ contract EchidnaTemplate {
 
     /* ================================================================
        Integer representations maximum values.
-       These constants are used for testing edge cases or limits for 
+       These constants are used for testing edge cases or limits for
        possible values.
        ================================================================ */
     int128 private constant MIN_64x64 = -0x80000000000000000000000000000000;
@@ -152,28 +152,40 @@ contract EchidnaTemplate {
 
     // This function allows to compare a and b for equality, discarding
     // the last precision_bits bits.
-    // This implements an absolute value function in order to not use 
+    // This implements an absolute value function in order to not use
     // the implementation from the library under test.
-    function equal_within_precision(int128 a, int128 b, uint256 precision_bits) private returns(bool) {
+    function equal_within_precision(
+        int128 a,
+        int128 b,
+        uint256 precision_bits
+    ) private returns (bool) {
         int128 max = (a > b) ? a : b;
         int128 min = (a > b) ? b : a;
         int128 r = (max - min) >> precision_bits;
-        
+
         return (r == 0);
     }
 
-    function equal_within_precision_u(uint256 a, uint256 b, uint256 precision_bits) private returns(bool) {
+    function equal_within_precision_u(
+        uint256 a,
+        uint256 b,
+        uint256 precision_bits
+    ) private returns (bool) {
         uint256 max = (a > b) ? a : b;
         uint256 min = (a > b) ? b : a;
         uint256 r = (max - min) >> precision_bits;
-        
+
         return (r == 0);
     }
 
     // This function determines if the relative error between a and b is less
     // than error_percent % (expressed as a 64x64 value)
     // Uses functions from the library under test!
-    function equal_within_tolerance(int128 a, int128 b, int128 error_percent) private returns(bool) {
+    function equal_within_tolerance(
+        int128 a,
+        int128 b,
+        int128 error_percent
+    ) private returns (bool) {
         int128 tol_value = abs(mul(a, div(error_percent, fromUInt(100))));
 
         return (abs(sub(b, a)) <= tol_value);
@@ -181,19 +193,25 @@ contract EchidnaTemplate {
 
     // Check that there are remaining significant digits after a multiplication
     // Uses functions from the library under test!
-    function significant_digits_lost_in_mult(int128 a, int128 b) private returns (bool) {
+    function significant_digits_lost_in_mult(
+        int128 a,
+        int128 b
+    ) private returns (bool) {
         int128 x = a >= 0 ? a : -a;
         int128 y = b >= 0 ? b : -b;
 
         int128 lx = toInt(log_2(x));
         int128 ly = toInt(log_2(y));
 
-        return(lx + ly - 1 <= -64);
+        return (lx + ly - 1 <= -64);
     }
 
     // Return how many significant bits will remain after multiplying a and b
     // Uses functions from the library under test!
-    function significant_bits_after_mult(int128 a, int128 b) private returns (uint256) {
+    function significant_bits_after_mult(
+        int128 a,
+        int128 b
+    ) private returns (uint256) {
         int128 x = a >= 0 ? a : -a;
         int128 y = b >= 0 ? b : -b;
 
@@ -202,34 +220,45 @@ contract EchidnaTemplate {
         int256 prec = lx + ly - 1;
 
         if (prec < -64) return 0;
-        else return(64 + uint256(prec));
+        else return (64 + uint256(prec));
     }
 
     // Return the i most significant bits from |n|. If n has less than i significant bits, return |n|
     // Uses functions from the library under test!
-    function most_significant_bits(int128 n, uint256 i) private returns (uint256) {
+    function most_significant_bits(
+        int128 n,
+        uint256 i
+    ) private returns (uint256) {
         // Create a mask consisting of i bits set to 1
-        uint256 mask = (2**i) - 1;
+        uint256 mask = (2 ** i) - 1;
 
         // Get the position of the MSB set to 1 of n
         uint256 pos = uint64(toInt(log_2(n)) + 64 + 1);
 
         // Get the positive value of n
-        uint256 value = (n>0) ? uint128(n) : uint128(-n);
+        uint256 value = (n > 0) ? uint128(n) : uint128(-n);
 
         // Shift the mask to match the rightmost 1-set bit
-        if(pos > i) { mask <<= (pos - i); }
+        if (pos > i) {
+            mask <<= (pos - i);
+        }
 
         return (value & mask);
     }
 
-    // Returns true if the n most significant bits of a and b are almost equal 
+    // Returns true if the n most significant bits of a and b are almost equal
     // Uses functions from the library under test!
-    function equal_most_significant_bits_within_precision(int128 a, int128 b, uint256 bits) private returns (bool) {
+    function equal_most_significant_bits_within_precision(
+        int128 a,
+        int128 b,
+        uint256 bits
+    ) private returns (bool) {
         uint256 a_bits = uint256(int256(toInt(log_2(a)) + 64));
         uint256 b_bits = uint256(int256(toInt(log_2(b)) + 64));
 
-        uint256 shift_bits = (a_bits > b_bits) ? (a_bits - bits) : (b_bits - bits);
+        uint256 shift_bits = (a_bits > b_bits)
+            ? (a_bits - bits)
+            : (b_bits - bits);
 
         uint256 a_msb = most_significant_bits(a, bits) >> shift_bits;
         uint256 b_msb = most_significant_bits(b, bits) >> shift_bits;
@@ -248,43 +277,55 @@ contract EchidnaTemplate {
     Start of tests
     ================================================================ */
 
+    // property-mode: cannot take in any arguments, can really only check state, can't do any operations
+    // function echidna_*() public returns(bool) {}
+
+    // assertion-mode: can take in arguments, which means we can do operations on state and check state, or run assert() on the inputs
+    // function echidna_*(a, b, c) public {}
+
     // Test for associative property
     // (x + y) + z == x + (y + z)
     function add_test_associative(int128 x, int128 y, int128 z) public {
+        // left side of equation
+        int128 xy = add(x, y);
+        int128 xy_z = add(xy, z);
+        // right side of equation
+        int128 yz = add(y, z);
+        int128 x_yz = add(x, yz);
+        // test they are equal
+        assert(xy_z == x_yz);
     }
-
-
-
-
-
-
-
-
-
-
-
 
     // Test (x + y) - y == x
     function add_sub_inverse_operations(int128 x, int128 y) public {
+        // Use events to help debug what the values are at each intermediate state of the test
+        emit Debug(x, y);
+        // taking a more creative approach to testing additions, can't just test associative or communicative properties of addition. Think of ways to break or test it differently, in this case using subtraction.
+        int128 xy = add(x, y); // bug here, as 0 + 0 = 1, because bug introduced in ABDKMath.add() method (intentionally)
+        int128 new_x = sub(xy, y);
+        emit Debug(xy, new_x);
+        // assert new x value is same as original x
+        assert(new_x == x);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     // Test that division is not commutative
     // (x / y) != (y / x)
     function div_test_not_commutative(int128 x, int128 y) public {
+        // 2. Add a strong "pre-condition": which will bound the input space
+        // require(abs(x) != abs(y));
+        // 4. optimization / arithmetic operations: to not waste computation (each time a require() fails) on #2 pre-condition
+        if (abs(x) == abs(y)) {
+            y = x + 1; // can still test post-conditions
+        }
+        // Perform the division on the values - these are called "action"
+        int128 xy = div(x, y);
+        int128 yx = div(y, x);
+        // 3. "Post-conditions"
+        // 1. Initially without post-conditions, it fails because when absolute values of x and y are equal is when division becomes commutative
+        if (abs(x) == abs(y)) {
+            assert(xy == yx);
+        } else {
+            assert(xy != yx);
+        }
     }
 }
