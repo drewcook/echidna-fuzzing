@@ -1,9 +1,9 @@
 pragma solidity ^0.6.0;
 
-import "./Setup.sol";
+import "./SetupSolution.sol";
 import "../libraries/UniswapV2Library.sol";
 
-contract EchidnaTest is Setup {
+contract EchidnaTestSolution is SetupSolution {
     event AmountsIn(uint amount0, uint amount1);
     event AmountsOut(uint amount0, uint amount1);
     event BalancesBefore(uint balance0, uint balance1);
@@ -21,20 +21,40 @@ contract EchidnaTest is Setup {
         }
         //// State before
         uint lpTokenBalanceBefore = pair.balanceOf(address(user));
-        (uint reserve0Before, uint reserve1Before,) = pair.getReserves();
+        (uint reserve0Before, uint reserve1Before, ) = pair.getReserves();
         uint kBefore = reserve0Before * reserve1Before;
         //// Transfer tokens to UniswapV2Pair contract
-        (bool success1,) = user.proxy(address(testToken1), abi.encodeWithSelector(testToken1.transfer.selector, address(pair), amount0));
-        (bool success2,) = user.proxy(address(testToken2), abi.encodeWithSelector(testToken2.transfer.selector, address(pair), amount1));
+        (bool success1, ) = user.proxy(
+            address(testToken1),
+            abi.encodeWithSelector(
+                testToken1.transfer.selector,
+                address(pair),
+                amount0
+            )
+        );
+        (bool success2, ) = user.proxy(
+            address(testToken2),
+            abi.encodeWithSelector(
+                testToken2.transfer.selector,
+                address(pair),
+                amount1
+            )
+        );
         require(success1 && success2);
 
         // Action:
-        (bool success3,) = user.proxy(address(pair), abi.encodeWithSelector(bytes4(keccak256("mint(address)")), address(user)));
+        (bool success3, ) = user.proxy(
+            address(pair),
+            abi.encodeWithSelector(
+                bytes4(keccak256("mint(address)")),
+                address(user)
+            )
+        );
 
         // Postconditions:
         if (success3) {
             uint lpTokenBalanceAfter = pair.balanceOf(address(user));
-            (uint reserve0After, uint reserve1After,) = pair.getReserves();
+            (uint reserve0After, uint reserve1After, ) = pair.getReserves();
             uint kAfter = reserve0After * reserve1After;
             assert(lpTokenBalanceBefore < lpTokenBalanceAfter);
             assert(kBefore < kAfter);
@@ -42,7 +62,6 @@ contract EchidnaTest is Setup {
     }
 
     function testBadSwap(uint amount0, uint amount1) public {
-
         if (!completed) {
             _init(amount0, amount1);
         }
@@ -52,12 +71,21 @@ contract EchidnaTest is Setup {
         require(pair.balanceOf(address(user)) > 0); //there is liquidity for the swap
 
         // Action:
-        (bool success,) = user.proxy(address(pair), abi.encodeWithSelector(pair.swap.selector, amount0, amount1, address(user), ""));
+        (bool success, ) = user.proxy(
+            address(pair),
+            abi.encodeWithSelector(
+                pair.swap.selector,
+                amount0,
+                amount1,
+                address(user),
+                ""
+            )
+        );
 
         // Post-condition:
         assert(!success); //call should never succeed
     }
-    
+
     function testSwap(uint amount0, uint amount1) public {
         // Preconditions:
         if (!completed) {
@@ -69,10 +97,10 @@ contract EchidnaTest is Setup {
         uint balance0Before = testToken1.balanceOf(address(user));
         uint balance1Before = testToken2.balanceOf(address(user));
 
-        (uint reserve0Before, uint reserve1Before,) = pair.getReserves();
+        (uint reserve0Before, uint reserve1Before, ) = pair.getReserves();
         uint kBefore = reserve0Before * reserve1Before;
         emit ReservesBefore(reserve0Before, reserve1Before);
-        
+
         uint amount0In = _between(amount0, 1, reserve0Before - 1);
         uint amount1In = _between(amount1, 1, reserve1Before - 1);
         // emit AmountsIn(amount0In, amount1In);
@@ -86,7 +114,7 @@ contract EchidnaTest is Setup {
         }
         require(amount0In <= balance0Before || amount1In <= balance1Before);
         emit BalancesBefore(balance0Before, balance1Before);
-        
+
         uint amount0Out;
         uint amount1Out;
 
@@ -104,32 +132,63 @@ contract EchidnaTest is Setup {
             require(amount0In <= balance0Before);
             amount1In = 0;
             amount0Out = 0;
-            amount1Out = UniswapV2Library.getAmountOut(amount0In, reserve0Before, reserve1Before);
+            amount1Out = UniswapV2Library.getAmountOut(
+                amount0In,
+                reserve0Before,
+                reserve1Before
+            );
             require(amount1Out > 0);
             emit AmountsIn(amount0In, amount1In);
             emit AmountsOut(amount0Out, amount1Out);
-            (bool success1,) = user.proxy(address(testToken1), abi.encodeWithSelector(testToken1.transfer.selector, address(pair), amount0In));
+            (bool success1, ) = user.proxy(
+                address(testToken1),
+                abi.encodeWithSelector(
+                    testToken1.transfer.selector,
+                    address(pair),
+                    amount0In
+                )
+            );
             require(success1);
         } else {
             require(amount1In <= balance1Before);
             amount0In = 0;
             amount1Out = 0;
-            amount0Out = UniswapV2Library.getAmountOut(amount1In, reserve1Before, reserve0Before);
+            amount0Out = UniswapV2Library.getAmountOut(
+                amount1In,
+                reserve1Before,
+                reserve0Before
+            );
             require(amount0Out > 0);
             emit AmountsIn(amount0In, amount1In);
             emit AmountsOut(amount0Out, amount1Out);
-            (bool success1,) = user.proxy(address(testToken2), abi.encodeWithSelector(testToken2.transfer.selector, address(pair), amount1In));
+            (bool success1, ) = user.proxy(
+                address(testToken2),
+                abi.encodeWithSelector(
+                    testToken2.transfer.selector,
+                    address(pair),
+                    amount1In
+                )
+            );
             require(success1);
         }
 
         // Action:
-        (bool success2,) = user.proxy(address(pair), abi.encodeWithSelector(pair.swap.selector, amount0Out, amount1Out, address(user), ""));
+        (bool success2, ) = user.proxy(
+            address(pair),
+            abi.encodeWithSelector(
+                pair.swap.selector,
+                amount0Out,
+                amount1Out,
+                address(user),
+                ""
+            )
+        );
 
         // Post-condition:
         /* 1. Swap should be successful */
         assert(success2);
         /* 2. Reserves may change, but k should be (relatively) constant */
-        (uint reserve0After, uint reserve1After,) = pair.getReserves();
+        (uint reserve0After, uint reserve1After, ) = pair.getReserves();
         uint kAfter = reserve0After * reserve1After;
         emit ReservesAfter(reserve0After, reserve1After);
         // assert(kBefore == kAfter);
@@ -146,5 +205,4 @@ contract EchidnaTest is Setup {
             assert(balance0After == balance0Before + amount0Out);
         }
     }
-
 }

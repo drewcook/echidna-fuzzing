@@ -1,0 +1,4 @@
+testMode: assertion # we have assert() calls in our fuzz tests
+corpusDir: corpus # coverage is our friend
+seqLen: 25 # how many txs to do before echidna starts, helps debug
+testLimit: 10000 # the amt of echidna runs, higher provides more certainty
